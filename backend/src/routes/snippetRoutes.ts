@@ -1,7 +1,10 @@
 import { Router } from 'express';
-import { postSnippet, getSnippet } from '../controllers/snippetController';
+import { createSnippet, getSnippet } from '../controllers/snippetController';
+import { validateSnippet } from '../middlewares/validateSnippet';
 
 const router = Router();
-router.post('/', postSnippet);
-router.get('/:id', getSnippet);
+
+router.post('/snippets', validateSnippet, createSnippet);
+router.get('/snippets/:id', getSnippet);
+
 export default router;
