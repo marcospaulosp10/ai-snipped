@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:8.0
+    command: ["mongod", "--port", "32000"]
+    ports:
+      - "32000:32000"
+    volumes:
+      - mongo-data:/data/db
+
+  backend:
+    env_file:
+        - ./backend/.env
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile
+      target: backend
+    environment:
+      - MONGO_URL=mongodb://mongo:32000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+
+  frontend:
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile
+      target: frontend
+    ports:
+      - "3030:3030"
+    depends_on:
+      - backend
+
+volumes:
+  mongo-data:
