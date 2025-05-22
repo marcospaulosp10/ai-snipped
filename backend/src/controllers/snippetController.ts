@@ -1,13 +1,12 @@
-import { Request, Response } from 'express';
-import { Snippet } from '../models/Snippet.js';
-import { generateSummary } from '../services/aiService.js';
+import { Request, Response, NextFunction } from 'express';
+import { Snippet } from '../models/Snippet';
+import { generateSummary } from '../services/aiService';
+import { ERROR_CODES } from '../constants/errorCodes.js';
+import { ERRORS } from '../constants/errors';
+import { AppError } from '../errors/AppError.js';
 
-export const createSnippet = async (req: Request, res: Response) => {
+export const createSnippet = async (req: Request, res: Response, next: NextFunction) => {
   const { text } = req.body;
-
-  if (!text) {
-    return res.status(400).json({ error: 'Text is required' });
-  }
 
   try {
     const summary = await generateSummary(text);
@@ -18,19 +17,35 @@ export const createSnippet = async (req: Request, res: Response) => {
       text: snippet.text,
       summary: snippet.summary,
     });
-  } catch (error) {
-    return res.status(500).json({ error: 'Internal server error' });
+  } catch (err: any) {
+    if (err.code === ERROR_CODES.OPENAI.INSUFFICIENT_QUOTA || err.status === 429) {
+      return next(new AppError(
+        ERRORS.OPENAI_QUOTA.CODE,
+        ERRORS.OPENAI_QUOTA.MESSAGE,
+        ERRORS.OPENAI_QUOTA.STATUS
+      ));
+    }
+
+    return next(new AppError(
+      ERRORS.INTERNAL.CODE,
+      err.message || ERRORS.INTERNAL.MESSAGE,
+      ERRORS.INTERNAL.STATUS
+    ));
   }
 };
 
-export const getSnippet = async (req: Request, res: Response) => {
+export const getSnippet = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
 
   try {
     const snippet = await Snippet.findById(id);
 
     if (!snippet) {
-      return res.status(404).json({ error: 'Snippet not found' });
+      return next(new AppError(
+        ERRORS.NOT_FOUND.CODE,
+        ERRORS.NOT_FOUND.MESSAGE,
+        ERRORS.NOT_FOUND.STATUS
+      ));
     }
 
     return res.json({
@@ -38,12 +53,24 @@ export const getSnippet = async (req: Request, res: Response) => {
       text: snippet.text,
       summary: snippet.summary,
     });
-  } catch (error) {
-    return res.status(400).json({ error: 'Invalid ID format' });
+  } catch (err: any) {
+    if (err.name === ERROR_CODES.MONGO.CAST_ERROR) {
+      return next(new AppError(
+        ERRORS.INVALID_ID.CODE,
+        ERRORS.INVALID_ID.MESSAGE,
+        ERRORS.INVALID_ID.STATUS
+      ));
+    }
+
+    return next(new AppError(
+      ERRORS.INTERNAL.CODE,
+      err.message || ERRORS.INTERNAL.MESSAGE,
+      ERRORS.INTERNAL.STATUS
+    ));
   }
 };
 
-export const listSnippets = async (req: Request, res: Response) => {
+export const listSnippets = async (req: Request, res: Response, next: NextFunction) => {
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 10;
 
@@ -65,7 +92,11 @@ export const listSnippets = async (req: Request, res: Response) => {
         summary: s.summary,
       })),
     });
-  } catch (error) {
-    return res.status(500).json({ error: 'Internal server error' });
+  } catch (err: any) {
+    return next(new AppError(
+      ERRORS.INTERNAL.CODE,
+      err.message || ERRORS.INTERNAL.MESSAGE,
+      ERRORS.INTERNAL.STATUS
+    ));
   }
 };
