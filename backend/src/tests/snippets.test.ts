@@ -12,53 +12,70 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await mongoose.connection.db.dropDatabase();
+  if (mongoose.connection.readyState === 1 && mongoose.connection.db) {
+    await mongoose.connection.db.dropDatabase();
+  }
   await mongoose.disconnect();
 });
 
+
 describe('POST /api/snippets', () => {
   it('should create a snippet and return id, text, and summary', async () => {
-    const response = await request(app)
+    const res = await request(app)
       .post('/api/snippets')
       .send({ text: 'Node.js is a powerful platform.' });
 
-    expect(response.status).toBe(201);
-    expect(response.body).toHaveProperty('id');
-    expect(response.body.text).toBe('Node.js is a powerful platform.');
-    expect(response.body.summary).toBe('mocked summary');
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty('id');
+    expect(res.body.text).toBe('Node.js is a powerful platform.');
+    expect(res.body.summary).toBe('mocked summary');
   });
 
   it('should return 400 if text is missing', async () => {
-    const response = await request(app).post('/api/snippets').send({});
-    expect(response.status).toBe(400);
-    expect(response.body.error).toBe('Text is required');
+    const res = await request(app).post('/api/snippets').send({});
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Text must be a non-empty string');
   });
 });
+
 describe('GET /api/snippets/:id', () => {
   it('should return a snippet by ID', async () => {
-    const postResponse = await request(app)
+    const postRes = await request(app)
       .post('/api/snippets')
       .send({ text: 'Test GET snippet' });
 
-    const snippetId = postResponse.body.id;
+    const id = postRes.body.id;
+    const getRes = await request(app).get(`/api/snippets/${id}`);
 
-    const getResponse = await request(app).get(`/api/snippets/${snippetId}`);
-    expect(getResponse.status).toBe(200);
-    expect(getResponse.body.id).toBe(snippetId);
-    expect(getResponse.body.text).toBe('Test GET snippet');
-    expect(getResponse.body.summary).toBe('mocked summary');
+    expect(getRes.status).toBe(200);
+    expect(getRes.body.id).toBe(id);
+    expect(getRes.body.text).toBe('Test GET snippet');
+    expect(getRes.body.summary).toBe('mocked summary');
   });
 
-  it('should return 404 if snippet does not exist', async () => {
+  it('should return 404 if snippet not found', async () => {
     const fakeId = '507f1f77bcf86cd799439011';
-    const response = await request(app).get(`/api/snippets/${fakeId}`);
-    expect(response.status).toBe(404);
-    expect(response.body.error).toBe('Snippet not found');
+    const res = await request(app).get(`/api/snippets/${fakeId}`);
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('Snippet not found');
   });
 
-  it('should return 400 if ID is invalid', async () => {
-    const response = await request(app).get('/api/snippets/invalid-id');
-    expect(response.status).toBe(400);
-    expect(response.body.error).toBe('Invalid ID format');
+  it('should return 400 for invalid ID format', async () => {
+    const res = await request(app).get('/api/snippets/invalid-id');
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Invalid ID format');
+  });
+});
+
+describe('GET /api/snippets', () => {
+  it('should return a paginated list of snippets', async () => {
+    await request(app).post('/api/snippets').send({ text: 'Snippet A' });
+    await request(app).post('/api/snippets').send({ text: 'Snippet B' });
+
+    const res = await request(app).get('/api/snippets?page=1&limit=2');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('total');
+    expect(res.body).toHaveProperty('data');
+    expect(Array.isArray(res.body.data)).toBe(true);
   });
 });

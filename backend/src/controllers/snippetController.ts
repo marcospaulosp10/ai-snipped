@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { Snippet } from '../models/Snippet';
-import { generateSummary } from '../services/aiService';
+import { Snippet } from '../models/Snippet.js';
+import { generateSummary } from '../services/aiService.js';
 
 export const createSnippet = async (req: Request, res: Response) => {
   const { text } = req.body;
@@ -19,7 +19,6 @@ export const createSnippet = async (req: Request, res: Response) => {
       summary: snippet.summary,
     });
   } catch (error) {
-    console.error('Error creating snippet:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -41,5 +40,32 @@ export const getSnippet = async (req: Request, res: Response) => {
     });
   } catch (error) {
     return res.status(400).json({ error: 'Invalid ID format' });
+  }
+};
+
+export const listSnippets = async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+
+  try {
+    const snippets = await Snippet.find()
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    const total = await Snippet.countDocuments();
+
+    return res.json({
+      total,
+      page,
+      limit,
+      data: snippets.map((s) => ({
+        id: s._id,
+        text: s.text,
+        summary: s.summary,
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };

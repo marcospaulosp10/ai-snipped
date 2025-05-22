@@ -15,7 +15,7 @@ services:
       dockerfile: ./docker/Dockerfile
       target: backend
     environment:
-      - MONGO_URL=mongodb://mongo:32000
+      - MONGO_URI=mongodb://mongo:32000/mydb
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     ports:
       - "3000:3000"
