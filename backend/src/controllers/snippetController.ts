@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { Snippet } from '../models/Snippet';
-import { generateSummary } from '../services/aiService';
+import { Snippet } from '../models/Snippet.js';
+import { generateSummary } from '../services/aiService.js';
 import { ERROR_CODES } from '../constants/errorCodes.js';
-import { ERRORS } from '../constants/errors';
+import { ERRORS } from '../constants/errors.js';
 import { AppError } from '../errors/AppError.js';
 
 export const createSnippet = async (req: Request, res: Response, next: NextFunction) => {
@@ -18,6 +18,7 @@ export const createSnippet = async (req: Request, res: Response, next: NextFunct
       summary: snippet.summary,
     });
   } catch (err: any) {
+    console.error(err);
     if (err.code === ERROR_CODES.OPENAI.INSUFFICIENT_QUOTA || err.status === 429) {
       return next(new AppError(
         ERRORS.OPENAI_QUOTA.CODE,

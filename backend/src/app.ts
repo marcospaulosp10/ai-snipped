@@ -1,11 +1,13 @@
-import express, { Application } from 'express';
-import dotenv from 'dotenv';
+import express from 'express';
 import snippetRoutes from './routes/snippetRoutes.js';
+import { errorHandler } from './middlewares/errorHandler.js';
+import { notFound } from './middlewares/notFound.js';
 
-dotenv.config();
+const app = express();
 
-const app: Application = express();
 app.use(express.json());
-app.use('/api', snippetRoutes);
+app.use('/api/snippets', snippetRoutes);
+app.use(notFound);
+app.use(errorHandler);
 
 export default app;

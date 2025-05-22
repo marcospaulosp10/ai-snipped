@@ -4,8 +4,8 @@ import { validateSnippet } from '../middlewares/validateSnippet.js';
 
 const router = Router();
 
-router.post('/snippets', validateSnippet, createSnippet);
-router.get('/snippets/:id', getSnippet);
-router.get('/snippets', listSnippets);
+router.post('/', validateSnippet, createSnippet);
+router.get('/', listSnippets);
+router.get('/:id', getSnippet);
 
 export default router;
