@@ -14,14 +14,14 @@ export const ERRORS = {
     MESSAGE: 'Text must be a non-empty string',
     STATUS: 400,
   },
-  OPENAI_QUOTA: {
-    CODE: 'OPENAI_QUOTA_EXCEEDED',
-    MESSAGE: 'AI quota exceeded. Check your OpenAI plan.',
-    STATUS: 429,
-  },
   INVALID_ID: {
     CODE: 'INVALID_ID',
     MESSAGE: 'Invalid ID format',
     STATUS: 400,
+  },
+  OPENAI_QUOTA: {
+    CODE: 'OPENAI_QUOTA_EXCEEDED',
+    MESSAGE: 'AI quota exceeded. Check your OpenAI plan.',
+    STATUS: 429,
   },
 };
