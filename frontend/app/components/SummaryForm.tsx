@@ -14,7 +14,7 @@ export default function SummaryForm() {
     setAlert(null);
 
     try {
-      const res = await fetch("/api/summary", {
+      const res = await fetch("/api/snippets", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
