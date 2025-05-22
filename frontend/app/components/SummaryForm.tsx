@@ -1,8 +1,6 @@
 import { useState, useRef } from "react";
-import { useFetcher } from "@remix-run/react";
 
 export default function SummaryForm() {
-  const fetcher = useFetcher();
   const [isLoading, setIsLoading] = useState(false);
   const [alert, setAlert] = useState<string | null>(null);
   const [summary, setSummary] = useState("");
@@ -16,7 +14,14 @@ export default function SummaryForm() {
     setAlert(null);
 
     try {
-      const res = await fetch(`/api/summary?text=${encodeURIComponent(clean)}`);
+      const res = await fetch("/api/summary", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: clean }),
+      });
+
       if (!res.ok) throw new Error("Failed to stream");
       const reader = res.body?.getReader();
       if (!reader) return;
@@ -41,11 +46,14 @@ export default function SummaryForm() {
 
   return (
     <div>
-      <fetcher.Form method="post" onSubmit={(e) => {
-        e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        handleSend(formData);
-      }} className="space-y-4">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const formData = new FormData(e.currentTarget);
+          handleSend(formData);
+        }}
+        className="space-y-4"
+      >
         <textarea
           name="text"
           className="w-full p-3 border rounded-md"
@@ -60,9 +68,11 @@ export default function SummaryForm() {
         >
           {isLoading ? "Loading..." : "Send"}
         </button>
-      </fetcher.Form>
+      </form>
 
-      {alert && <div className="mt-4 bg-red-100 text-red-700 p-3 rounded">{alert}</div>}
+      {alert && (
+        <div className="mt-4 bg-red-100 text-red-700 p-3 rounded">{alert}</div>
+      )}
       <div ref={summaryRef}></div>
     </div>
   );
