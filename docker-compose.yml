@@ -9,7 +9,7 @@ services:
 
   backend:
     env_file:
-        - ./backend/.env
+      - ./backend/.env
     build:
       context: ./
       dockerfile: ./docker/Dockerfile
@@ -31,6 +31,22 @@ services:
       - "3030:3030"
     depends_on:
       - backend
+
+  test:
+    env_file:
+      - ./backend/.env
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile
+      target: backend
+    depends_on:
+      - mongo
+    environment:
+      - MONGO_URI=mongodb://mongo:32000/mydb
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    command: npm run test:ci
+    volumes:
+      - .:/app
 
 volumes:
   mongo-data:
